@@ -3,6 +3,7 @@ import json
 import requests
 import os
 import csv
+import taglib
 
 def loginFeishu(app_id: str, app_secret: str) -> str:
     url = "https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal"
@@ -59,9 +60,11 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     prefix = record['fields']['前缀'][0]['text']
     print(prefix, end="", flush=True)
 
+    audio_updated = False
     if '歌曲文件' in record['fields']:
         audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
         if not os.path.exists(audio_file_path) or update_required:
+            audio_updated = True
             print(" 🎶", end="", flush=True)
             downloadFile(record['fields']['歌曲文件'][0], audio_file_path, tenant_access_token)
     if '封面' in record['fields']:
@@ -70,6 +73,15 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
             print(" 🖼️", end="", flush=True)
             downloadFile(record['fields']['封面'][0], cover_file_path, tenant_access_token)
     print('')
+
+    if audio_updated:
+        # 更新歌曲元数据
+        song = taglib.File(audio_file_path)
+        song.tags['ARTIST'] = record['fields']['表演者']
+        song.tags['TITLE'] = record['fields']['歌舞名称']
+        song.tags['ALBUM'] = record['fields']['直播'][0]['text']
+
+        song.save()
 
     # 在这里构建csv行
     name = ''
