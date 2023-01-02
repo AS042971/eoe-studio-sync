@@ -80,18 +80,28 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
         song.tags['ALBUMARTIST'] = 'EOE组合'
         if '原唱' in record['fields']:
             song.tags['COMPOSER'] = record['fields']['原唱']
-        song.tags['ARTIST'] = "/".join(record['fields']['表演者'])
+        if '全员' in record['fields']['表演者']:
+            song.tags['ARTIST'] = "莞儿/露早/米诺/虞莫/柚恩"
+        else:
+            song.tags['ARTIST'] = "/".join(record['fields']['表演者'])
         song.tags['TITLE'] = record['fields']['歌舞名称']
         song.tags['ALBUM'] = record['fields']['直播'][0]['text']
-
         song.save()
+        song.close()
+
+    # 填充长度
+    song_length = 0
+    if os.path.exists(audio_file_path):
+        song = taglib.File(audio_file_path)
+        song_length = song.length
+        song.close()
 
     # 在这里构建csv行
     name = ''
     if '歌舞名称' in record['fields']:
         name = record['fields']['歌舞名称']
 
-    csv_line = f'{record_id},{update_time},{prefix},{name}'
+    csv_line = f'{record_id},{update_time},{prefix},{name},{song_length}'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
