@@ -2,6 +2,7 @@ import argparse
 import json
 import requests
 import os
+import sys
 import csv
 import taglib
 
@@ -50,7 +51,7 @@ def downloadFile(file_obj: dict, path: str, tenant_access_token: str):
     file_response = requests.get(direct_url)
     open(path, "wb").write(file_response.content)
 
-def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, cover_path: str, tenant_access_token: str) -> str:
+def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, cover_path: str, tenant_access_token: str, tag_editor_bin: str) -> str:
     record_id = record['record_id']
     update_time = record['fields']['最后更新时间']
     update_required = True
@@ -61,15 +62,17 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     print(prefix, end="", flush=True)
 
     audio_updated = False
+    audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
+    cover_updated = False
+    cover_file_path = os.path.join(cover_path, f'{prefix}.png')
     if '歌曲文件' in record['fields'] and record['fields']['歌曲文件']:
-        audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
         if not os.path.exists(audio_file_path) or update_required:
             audio_updated = True
             print(" 🎶", end="", flush=True)
             downloadFile(record['fields']['歌曲文件'][0], audio_file_path, tenant_access_token)
     if '封面' in record['fields'] and record['fields']['封面']:
-        cover_file_path = os.path.join(cover_path, f'{prefix}.png')
         if not os.path.exists(cover_file_path) or update_required:
+            cover_updated = True
             print(" 🖼️", end="", flush=True)
             downloadFile(record['fields']['封面'][0], cover_file_path, tenant_access_token)
     print('')
@@ -96,6 +99,13 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
         song.save()
         song.close()
 
+    if tag_editor_bin:
+        if audio_updated or cover_updated:
+            if os.path.exists(audio_file_path) and os.path.exists(cover_file_path):
+                # 嵌入封面文件
+                cmd = f'{os.path.abspath(tag_editor_bin)} -s cover="{cover_file_path}" --max-padding 10000000 -f "{audio_file_path}" -q'
+                os.system(cmd)
+
     # 填充长度
     song_length = 0
     if os.path.exists(audio_file_path):
@@ -112,7 +122,7 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
-                 database_path: str, audio_path: str, cover_path: str):
+                 database_path: str, audio_path: str, cover_path: str, tag_editor_bin: str):
     # 连接飞书API
     tenant_access_token = loginFeishu(app_id, app_secret)
     current_update_time_dict = initFiles(database_path, audio_path, cover_path)
@@ -131,7 +141,7 @@ def syncDatabase(app_id: str, app_secret: str,
             for record in response_json['data']['items']:
                 idx += 1
                 print(f"正在同步 {idx}/{response_json['data']['total']}: ", end="")
-                new_database_item = syncRecord(record, current_update_time_dict, audio_path, cover_path, tenant_access_token)
+                new_database_item = syncRecord(record, current_update_time_dict, audio_path, cover_path, tenant_access_token, tag_editor_bin)
                 database_handler.write(new_database_item + '\n')
                 database_handler.flush()
             has_more = response_json['data']['has_more']
@@ -149,8 +159,17 @@ def main():
                         help="音频文件存储路径")
     parser.add_argument("--cover", default="./cover",
                         help="封面文件存储路径")
+    parser.add_argument("--tag-editor-bin", default="./bin/tageditor.exe",
+                        help="为音频文件嵌入封面, 请前往 https://github.com/Martchus/tageditor 下载可执行文件")
     args = parser.parse_args()
-    syncDatabase(args.app_id, args.app_secret, args.database, args.audio, args.cover)
+
+    if not os.path.exists(args.tag_editor_bin):
+        ans = input(f'\033[93m在"{args.tag_editor_bin}"找不到 tageditor 可执行文件.\n请前往 https://github.com/Martchus/tageditor/releases 下载最新发行版并置于指定路径, 否则歌曲嵌入封面功能将失效.\n是否继续? [Y/n]\033[0m')
+        if ans.lower() == 'no' or ans.lower() == 'n':
+            sys.exit(-1)
+        args.tag_editor_bin = ""
+
+    syncDatabase(args.app_id, args.app_secret, args.database, args.audio, args.cover, args.tag_editor_bin)
 
 if __name__ == '__main__':
     main()
