@@ -61,13 +61,13 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     print(prefix, end="", flush=True)
 
     audio_updated = False
-    if '歌曲文件' in record['fields']:
+    if '歌曲文件' in record['fields'] and record['fields']['歌曲文件']:
         audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
         if not os.path.exists(audio_file_path) or update_required:
             audio_updated = True
             print(" 🎶", end="", flush=True)
             downloadFile(record['fields']['歌曲文件'][0], audio_file_path, tenant_access_token)
-    if '封面' in record['fields']:
+    if '封面' in record['fields'] and record['fields']['封面']:
         cover_file_path = os.path.join(cover_path, f'{prefix}.png')
         if not os.path.exists(cover_file_path) or update_required:
             print(" 🖼️", end="", flush=True)
@@ -77,7 +77,10 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     if audio_updated:
         # 更新歌曲元数据
         song = taglib.File(audio_file_path)
-        song.tags['ARTIST'] = record['fields']['表演者']
+        song.tags['ALBUMARTIST'] = 'EOE组合'
+        if '原唱' in record['fields']:
+            song.tags['COMPOSER'] = record['fields']['原唱']
+        song.tags['ARTIST'] = "/".join(record['fields']['表演者'])
         song.tags['TITLE'] = record['fields']['歌舞名称']
         song.tags['ALBUM'] = record['fields']['直播'][0]['text']
 
