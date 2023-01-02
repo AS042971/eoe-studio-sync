@@ -84,8 +84,15 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
             song.tags['ARTIST'] = "莞儿/露早/米诺/虞莫/柚恩"
         else:
             song.tags['ARTIST'] = "/".join(record['fields']['表演者'])
+        if '版本备注' in record['fields']:
+            song.tags['COMMENT'] = record['fields']['版本备注']
+        if '语言' in record['fields']:
+            song.tags['GENRE'] = record['fields']['语言']
         song.tags['TITLE'] = record['fields']['歌舞名称']
-        song.tags['ALBUM'] = record['fields']['直播'][0]['text']
+        live = record['fields']['直播'][0]['text'].strip()
+        song.tags['ALBUM'] = live
+        if live.startswith('20'):
+            song.tags['DATE'] = live[0:4]
         song.save()
         song.close()
 
