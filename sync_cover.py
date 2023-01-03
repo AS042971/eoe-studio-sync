@@ -98,7 +98,6 @@ def syncDatabase(app_id: str, app_secret: str):
         has_more = response_json['data']['has_more']
         page_token = response_json['data']['page_token']
 
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("app_id",
