@@ -69,12 +69,14 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
     cover_updated = False
     cover_file_path = os.path.join(cover_path, f'{prefix}.png')
+    csv_has_cover = 0
     if '歌曲文件' in fields and fields['歌曲文件']:
         if (not os.path.exists(audio_file_path) and not ignore_local) or update_required:
             audio_updated = True
             print(" 🎶", end="", flush=True)
             downloadFile(fields['歌曲文件'][0], audio_file_path, tenant_access_token)
     if '封面' in fields and fields['封面']:
+        csv_has_cover = 1
         if (not os.path.exists(cover_file_path) and not ignore_local) or update_required:
             cover_updated = True
             print(" 🖼️", end="", flush=True)
@@ -126,7 +128,7 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     csv_lang = fields['语言'] if '语言' in fields else ''
     csv_quality = fields['完整度'] if '完整度' in fields else ''
 
-    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},m4a,{csv_duration},{csv_lang},{csv_quality}'
+    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},m4a,{csv_duration},{csv_lang},{csv_quality},{csv_has_cover}'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
