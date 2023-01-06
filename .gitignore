@@ -1,4 +1,5 @@
 database.csv
+database.csv.bak
 audio/*.m4a
 cover/*.png
 bin/*.exe

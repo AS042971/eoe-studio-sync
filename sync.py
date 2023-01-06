@@ -4,6 +4,7 @@ import requests
 import os
 import sys
 import csv
+import shutil
 import taglib
 
 def loginFeishu(app_id: str, app_secret: str) -> str:
@@ -39,6 +40,7 @@ def initFiles(database_path: str, audio_path: str, cover_path: str) -> dict:
         for row in reader:
             # 提取更新时间和歌曲时长
             current_update_time_dict[row[0]] = (int(row[1]), int(row[8]))
+    shutil.copy(database_path, database_path+'.bak')
     return current_update_time_dict
 
 def downloadFile(file_obj: dict, path: str, tenant_access_token: str):
