@@ -57,7 +57,7 @@ def downloadFile(file_obj: dict, path: str, tenant_access_token: str):
 def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, cover_path: str, tenant_access_token: str, tag_editor_bin: str, ignore_local: bool) -> str:
     record_id = record['record_id']
     fields = record['fields']
-    update_time = fields['最后更新时间']
+    update_time = fields['最后更新时间'] if '最后更新时间' in fields and fields['最后更新时间'] else 0
     update_required = True
     csv_duration = 0
     if record_id in current_update_time_dict:
@@ -89,18 +89,18 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
         # 更新歌曲元数据
         song = taglib.File(audio_file_path)
         song.tags['ALBUMARTIST'] = 'EOE组合'
-        if '原唱' in fields:
+        if '原唱' in fields and fields['原唱']:
             song.tags['COMPOSER'] = fields['原唱']
-        if '全员' in fields['表演者']:
+        if '表演者' in fields and '全员' in fields['表演者']:
             song.tags['ARTIST'] = "莞儿/露早/米诺/虞莫/柚恩"
-        else:
+        elif '表演者' in fields and fields['表演者']:
             song.tags['ARTIST'] = "/".join(fields['表演者'])
-        if '版本备注' in fields:
+        if '版本备注' in fields and fields['版本备注']:
             song.tags['COMMENT'] = fields['版本备注']
-        if '语言' in fields:
+        if '语言' in fields and fields['语言']:
             song.tags['GENRE'] = fields['语言']
-        song.tags['TITLE'] = fields['歌舞名称']
-        live = fields['直播'][0]['text'].strip()
+        song.tags['TITLE'] = fields['歌舞名称'] if '歌舞名称' in fields and fields['歌舞名称'] else ''
+        live = fields['直播'][0]['text'].strip() if '直播' in fields and fields['直播'] else ''
         song.tags['ALBUM'] = live
         if live.startswith('20'):
             song.tags['DATE'] = live[0:4]
