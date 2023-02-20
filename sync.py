@@ -6,7 +6,7 @@ import sys
 import csv
 import shutil
 import taglib
-
+import adjust_name_convention as adjust
 def loginFeishu(app_id: str, app_secret: str) -> str:
     url = "https://open.feishu.cn/open-apis/auth/v3/app_access_token/internal"
     payload = json.dumps({
@@ -184,6 +184,7 @@ def main():
         args.tag_editor_bin = ""
 
     syncDatabase(args.app_id, args.app_secret, args.database, args.audio, args.cover, args.tag_editor_bin, args.ignore_local_file)
-
+    adjust.adjust_csv(args.database)
+    adjust.adjust_two_files_name()
 if __name__ == '__main__':
     main()
