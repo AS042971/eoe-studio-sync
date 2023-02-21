@@ -5,11 +5,11 @@ import pandas as pd
 def adjust_csv(database_path: str):
     if not os.path.exists(database_path):
         raise Exception('audio路径不存在')
-    df = pd.read_csv(database_path, encoding="utf-8-sig")
+    df = pd.read_csv(database_path, encoding="utf-8-sig", header=None)
     for i in range(0, len(df)):
         if df.iloc[i - 1, 4] == '全员':
             df.iloc[i - 1, 4] = 'EOE'
-    df.to_csv(database_path, index=False)
+    df.to_csv(database_path, index=False, header=None)
 
 
 def adjust_two_files_name():
