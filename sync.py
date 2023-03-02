@@ -65,10 +65,22 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
         if update_time <= current_update_time:
             update_required = False
     prefix = fields['前缀'][0]['text']
+    postfix = 'm4a'
+    if '歌曲文件' in fields and fields['歌曲文件']:
+        raw_file_name: str = fields['歌曲文件'][0]['name']
+        if raw_file_name.endswith('m4a'):
+            postfix = 'm4a'
+        elif raw_file_name.endswith('mp3'):
+            postfix = 'mp3'
+        elif raw_file_name.endswith('flac'):
+            postfix = 'flac'
+        else:
+            print(f'不支持的扩展名：{raw_file_name}')
+            return ""
     print(prefix, end="", flush=True)
 
     audio_updated = False
-    audio_file_path = os.path.join(audio_path, f'{prefix}.m4a')
+    audio_file_path = os.path.join(audio_path, f'{prefix}.{postfix}')
     cover_updated = False
     cover_file_path = os.path.join(cover_path, f'{prefix}.png')
     csv_has_cover = 0
@@ -109,7 +121,7 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
 
     if tag_editor_bin:
         if audio_updated or cover_updated:
-            if os.path.exists(audio_file_path) and os.path.exists(cover_file_path):
+            if os.path.exists(audio_file_path) and os.path.exists(cover_file_path) and postfix == 'm4a':
                 # 嵌入封面文件
                 cmd = f'{os.path.abspath(tag_editor_bin)} -s cover="{cover_file_path}" --max-padding 10000000 -f "{audio_file_path}" -q'
                 os.system(cmd)
@@ -130,7 +142,7 @@ def syncRecord(record: dict, current_update_time_dict: dict, audio_path: str, co
     csv_lang = fields['语言'] if '语言' in fields else ''
     csv_quality = fields['完整度'] if '完整度' in fields else ''
 
-    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},m4a,{csv_duration},{csv_lang},{csv_quality},{csv_has_cover}'
+    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover}'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
@@ -154,8 +166,9 @@ def syncDatabase(app_id: str, app_secret: str,
                 idx += 1
                 print(f"正在同步 {idx}/{response_json['data']['total']}: ", end="")
                 new_database_item = syncRecord(record, current_update_time_dict, audio_path, cover_path, tenant_access_token, tag_editor_bin, ignore_local)
-                database_handler.write(new_database_item + '\n')
-                database_handler.flush()
+                if new_database_item != '':
+                    database_handler.write(new_database_item + '\n')
+                    database_handler.flush()
             has_more = response_json['data']['has_more']
             page_token = response_json['data']['page_token']
 

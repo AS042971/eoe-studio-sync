@@ -1,6 +1,8 @@
 database.csv
 database.csv.bak
 audio/*.m4a
+audio/*.flac
+audio/*.mp3
 cover/*.png
 bin/*.exe
 .DS_Store
