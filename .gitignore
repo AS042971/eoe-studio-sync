@@ -3,3 +3,4 @@ database.csv.bak
 audio/*.m4a
 cover/*.png
 bin/*.exe
+.DS_Store
