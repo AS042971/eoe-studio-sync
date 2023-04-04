@@ -1,2 +1,3 @@
 pytaglib
 requests-toolbelt
+PIL
