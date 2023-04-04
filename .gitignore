@@ -7,6 +7,7 @@ audio/*.mp3
 audio/*.wav
 cover/*.png
 thumbnail/*.png
+lyric/*.lrc
 bin/*.exe
 .DS_Store
 .idea

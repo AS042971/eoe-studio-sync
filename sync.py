@@ -6,6 +6,7 @@ import sys
 import csv
 import shutil
 import taglib
+import tempfile
 from PIL import Image
 
 def loginFeishu(app_id: str, app_secret: str) -> str:
@@ -83,6 +84,17 @@ def cutThumbnail(cover_path: str, thumb_path: str) -> None:
     copy.thumbnail((50, 50))
     copy.save(thumb_path, "PNG")
 
+def convertLyric(lyric_tmp_file_path: str, lyric_file_path: str) -> str:
+    f_in = open(lyric_tmp_file_path,"r")
+    f_out = open(lyric_file_path,"w+")
+    for line in f_in:
+        if line.startswith("Dialogue:"):
+            phrased = line.split(",")
+            lrc_line = f'[{phrased[1]}]{phrased[9]}'
+            f_out.write(lrc_line)
+    f_out.close()
+    f_in.close()
+
 def syncRecord(record: dict, current_update_time_dict: dict,
                audio_path: str, cover_path: str, thumb_path: str, lyric_path: str,
                tenant_access_token: str, tag_editor_bin: str, ignore_local: bool) -> str:
@@ -112,11 +124,15 @@ def syncRecord(record: dict, current_update_time_dict: dict,
     print(prefix, end="", flush=True)
 
     audio_updated = False
-    audio_file_path = os.path.join(audio_path, f'{prefix}.{postfix}')
     cover_updated = False
+    lyric_updated = False
+    audio_file_path = os.path.join(audio_path, f'{prefix}.{postfix}')
     cover_file_path = os.path.join(cover_path, f'{prefix}.png')
     thumb_file_path = os.path.join(thumb_path, f'{prefix}.png')
+    lyric_tmp_file_path = os.path.join(tempfile.gettempdir(), f'{prefix}.ass')
+    lyric_file_path = os.path.join(lyric_path, f'{prefix}.lrc')
     csv_has_cover = 0
+    csv_has_lyric = 0
     if '歌曲文件' in fields and fields['歌曲文件']:
         if (not os.path.exists(audio_file_path) and not ignore_local) or update_required:
             audio_updated = True
@@ -131,9 +147,18 @@ def syncRecord(record: dict, current_update_time_dict: dict,
         if os.path.exists(cover_file_path) and ((not os.path.exists(thumb_file_path) and not ignore_local) or update_required):
             print(" ✂️", end="", flush=True)
             cutThumbnail(cover_file_path, thumb_file_path)
-    print('')
+    if 'ASS字幕文件' in fields and fields['ASS字幕文件']:
+        csv_has_lyric = 1
+        if (not os.path.exists(lyric_file_path) and not ignore_local) or update_required:
+            lyric_updated = True
+            print(" 🗒️", end="", flush=True)
+            downloadFile(fields['ASS字幕文件'][0], lyric_tmp_file_path, tenant_access_token)
+            convertLyric(lyric_tmp_file_path, lyric_file_path)
 
-    if audio_updated:
+    live = fields['直播'][0]['text'].strip() if '直播' in fields and fields['直播'] else ''
+
+    if audio_updated or lyric_updated:
+        print(" 🔄", end="", flush=True)
         # 更新歌曲元数据
         song = taglib.File(audio_file_path)
         song.tags['ALBUMARTIST'] = 'EOE组合'
@@ -148,16 +173,20 @@ def syncRecord(record: dict, current_update_time_dict: dict,
         if '语言' in fields and fields['语言']:
             song.tags['GENRE'] = fields['语言']
         song.tags['TITLE'] = fields['歌舞名称'] if '歌舞名称' in fields and fields['歌舞名称'] else ''
-        live = fields['直播'][0]['text'].strip() if '直播' in fields and fields['直播'] else ''
         song.tags['ALBUM'] = live
         if live.startswith('20'):
             song.tags['DATE'] = live[0:4]
+        if os.path.exists(lyric_file_path):
+            f_l = open(lyric_file_path,"r")
+            song.tags['©lyr'] = f_l.read()
+            f_l.close()
         song.save()
         song.close()
 
     if tag_editor_bin:
         if audio_updated or cover_updated:
             if os.path.exists(audio_file_path) and os.path.exists(cover_file_path) and postfix == 'm4a':
+                print(" 🔄", end="", flush=True)
                 # 嵌入封面文件
                 cmd = f'{os.path.abspath(tag_editor_bin)} -s cover="{cover_file_path}" --max-padding 10000000 -f "{audio_file_path}" -q'
                 os.system(cmd)
@@ -169,6 +198,8 @@ def syncRecord(record: dict, current_update_time_dict: dict,
             csv_duration = song.length
             song.close()
 
+    print(' ')
+
     # 在这里构建csv行
     csv_name = fields['歌舞名称'].replace(',','，') if '歌舞名称' in fields else ''
     csv_oname = fields['歌舞别名(可选)'].replace(',','，') if '歌舞别名(可选)' in fields and fields['歌舞别名(可选)'] else ''
@@ -179,12 +210,12 @@ def syncRecord(record: dict, current_update_time_dict: dict,
     csv_version = fields['版本备注'] if '版本备注' in fields else ''
     csv_lang = fields['语言'] if '语言' in fields else ''
     csv_quality = fields['完整度'] if '完整度' in fields else ''
-    csv_live = fields['直播'][0]['text']
+    csv_live = live
     csv_bv = fields['官切BV号'] if '官切BV号' in fields and fields['官切BV号'].startswith('BV') else ''
     if not csv_bv:
         csv_bv = fields['录播组BV号'] if '录播组BV号' in fields  and fields['录播组BV号'].startswith('BV') else ''
 
-    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover},{csv_live},{csv_bv},0'
+    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover},{csv_live},{csv_bv},{csv_has_lyric}'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
