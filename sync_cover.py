@@ -67,10 +67,12 @@ def syncRecord(record: dict, tenant_access_token: str):
 
     has_cover = '封面' in record['fields'] and record['fields']['封面']
     if not has_cover:
-        has_bv = '录播组BV号' in record['fields'] and record['fields']['录播组BV号'] and record['fields']['录播组BV号'].startswith('BV')
-        if has_bv:
+        bvid = record['fields']['录播组BV号'] if '录播组BV号' in record['fields'] and record['fields']['录播组BV号'] and record['fields']['录播组BV号'].startswith('BV') else ''
+        if not bvid:
+            bvid = record['fields']['官切BV号'] if '官切BV号' in record['fields'] and record['fields']['官切BV号'] and record['fields']['官切BV号'].startswith('BV') else ''
+        if bvid:
             print(" 🖼️", end="", flush=True)
-            cover_url = getCoverURL(record['fields']['录播组BV号'])
+            cover_url = getCoverURL(bvid)
             file_token = uploadPic(f'{prefix}.png', cover_url, tenant_access_token)
             insertPic(record['record_id'], file_token, tenant_access_token)
 
