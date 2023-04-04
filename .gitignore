@@ -3,6 +3,8 @@ database.csv.bak
 audio/*.m4a
 audio/*.flac
 audio/*.mp3
+audio/*.wav
 cover/*.png
 bin/*.exe
 .DS_Store
+.idea

@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-
+import shutil
 
 def adjust_csv(database_path: str):
     if not os.path.exists(database_path):
@@ -20,6 +20,9 @@ def adjust_two_files_name():
                 if len(split) > 1 and '合唱' in split[1]:
                     split[1] = 'EOE'
                 new_filename = ' '.join(split)
-                os.rename(os.path.join(directory, filename), os.path.join(directory, new_filename))
+                try:
+                    shutil.move(os.path.join(directory, filename), os.path.join(directory, new_filename))
+                except shutil.SameFileError:
+                    pass
     adjust_file_name('./audio')
     adjust_file_name('./cover')
