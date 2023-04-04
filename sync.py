@@ -179,8 +179,12 @@ def syncRecord(record: dict, current_update_time_dict: dict,
     csv_version = fields['版本备注'] if '版本备注' in fields else ''
     csv_lang = fields['语言'] if '语言' in fields else ''
     csv_quality = fields['完整度'] if '完整度' in fields else ''
+    csv_live = fields['直播'][0]['text']
+    csv_bv = fields['官切BV号'] if '官切BV号' in fields and fields['官切BV号'].startswith('BV') else ''
+    if not csv_bv:
+        csv_bv = fields['录播组BV号'] if '录播组BV号' in fields  and fields['录播组BV号'].startswith('BV') else ''
 
-    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover}'
+    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover},{csv_live},{csv_bv}'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
