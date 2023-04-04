@@ -184,7 +184,7 @@ def syncRecord(record: dict, current_update_time_dict: dict,
     if not csv_bv:
         csv_bv = fields['录播组BV号'] if '录播组BV号' in fields  and fields['录播组BV号'].startswith('BV') else ''
 
-    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover},{csv_live},{csv_bv}'
+    csv_line = f'{record_id},{update_time},{csv_name},{csv_oname},{csv_singer},{csv_date},{csv_version},{postfix},{csv_duration},{csv_lang},{csv_quality},{csv_has_cover},{csv_live},{csv_bv},0'
     return csv_line
 
 def syncDatabase(app_id: str, app_secret: str,
