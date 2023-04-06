@@ -177,7 +177,7 @@ def syncRecord(record: dict, current_update_time_dict: dict,
         if live.startswith('20'):
             song.tags['DATE'] = live[0:4]
         if os.path.exists(lyric_file_path):
-            f_l = open(lyric_file_path,"r")
+            f_l = open(lyric_file_path,"r", encoding="utf-8")
             song.tags['©lyr'] = f_l.read()
             f_l.close()
         song.save()
