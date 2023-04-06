@@ -85,8 +85,8 @@ def cutThumbnail(cover_path: str, thumb_path: str) -> None:
     copy.save(thumb_path, "PNG")
 
 def convertLyric(lyric_tmp_file_path: str, lyric_file_path: str) -> str:
-    f_in = open(lyric_tmp_file_path,"r")
-    f_out = open(lyric_file_path,"w+")
+    f_in = open(lyric_tmp_file_path,"r", encoding="utf-8")
+    f_out = open(lyric_file_path,"w+", encoding="utf-8")
     for line in f_in:
         if line.startswith("Dialogue:"):
             phrased = line.split(",")
