@@ -118,6 +118,8 @@ def syncRecord(record: dict, current_update_time_dict: dict,
             postfix = 'mp3'
         elif raw_file_name.endswith('flac'):
             postfix = 'flac'
+        elif raw_file_name.endswith('wav'):
+            postfix = 'wav'
         else:
             print(f'不支持的扩展名：{raw_file_name}')
             return ""
