@@ -81,7 +81,7 @@ def getCropRegion(width, height):
 def cutThumbnail(cover_path: str, thumb_path: str) -> None:
     im = Image.open(cover_path)
     copy = im.crop(getCropRegion(im.size[0], im.size[1]))
-    copy.thumbnail((50, 50))
+    copy.thumbnail((150, 150))
     copy.save(thumb_path, "PNG")
 
 def convertLyric(lyric_tmp_file_path: str, lyric_file_path: str) -> str:
