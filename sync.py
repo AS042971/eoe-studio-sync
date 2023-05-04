@@ -81,7 +81,7 @@ def getCropRegion(width, height):
 def cutThumbnail(cover_path: str, thumb_path: str) -> None:
     im = Image.open(cover_path)
     copy = im.crop(getCropRegion(im.size[0], im.size[1]))
-    copy.thumbnail((50, 50))
+    copy.thumbnail((150, 150))
     copy.save(thumb_path, "PNG")
 
 def convertLyric(lyric_tmp_file_path: str, lyric_file_path: str) -> str:
@@ -109,6 +109,7 @@ def syncRecord(record: dict, current_update_time_dict: dict,
             update_required = False
     prefix = fields['前缀'][0]['text']
     prefix = prefix.replace('合唱', 'EOE')
+    prefix = prefix.replace('团舞', 'EOE')
     postfix = 'm4a'
     if '歌曲文件' in fields and fields['歌曲文件']:
         raw_file_name: str = fields['歌曲文件'][0]['name']
@@ -118,6 +119,8 @@ def syncRecord(record: dict, current_update_time_dict: dict,
             postfix = 'mp3'
         elif raw_file_name.endswith('flac'):
             postfix = 'flac'
+        elif raw_file_name.endswith('wav'):
+            postfix = 'wav'
         else:
             print(f'不支持的扩展名：{raw_file_name}')
             return ""
