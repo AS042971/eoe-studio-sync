@@ -251,7 +251,8 @@ def syncDatabase(app_id: str, app_secret: str,
             has_more = response_json['data']['has_more']
             page_token = response_json['data']['page_token']
     # finish
-    shutil.copy(database_path, database_path+'.bak')
+    if os.path.exists(database_path):
+        shutil.copy(database_path, database_path+'.bak')
     shutil.move(database_path+'.sync', database_path)
 
 
