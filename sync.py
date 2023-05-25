@@ -28,7 +28,7 @@ def loginFeishu(app_id: str, app_secret: str) -> str:
 
     return response_json["tenant_access_token"]
 
-def initFiles(database_path: str, audio_path: str, cover_path: str, thumb_path: str, lyric_path: str) -> dict:
+def initFiles(database_path: str, audio_path: str, cover_path: str, thumb_path: str, lyric_path: str, include_sync: bool) -> dict:
     # 创建音频目录
     if not os.path.exists(audio_path):
         os.makedirs(audio_path)
@@ -46,7 +46,14 @@ def initFiles(database_path: str, audio_path: str, cover_path: str, thumb_path: 
         for row in reader:
             # 提取更新时间和歌曲时长
             current_update_time_dict[row[0]] = (int(row[1]), int(row[8]))
-    shutil.copy(database_path, database_path+'.sync')
+    if include_sync:
+        with open(database_path + '.sync', newline='', encoding="utf-8-sig") as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                # 提取更新时间和歌曲时长
+                current_update_time_dict[row[0]] = (int(row[1]), int(row[8]))
+    if not include_sync:
+        shutil.copy(database_path, database_path+'.sync')
     return current_update_time_dict
 
 def downloadFile(file_obj: dict, path: str, tenant_access_token: str):
@@ -226,7 +233,13 @@ def syncDatabase(app_id: str, app_secret: str,
                  tag_editor_bin: str, ignore_local: bool):
     # 连接飞书API
     tenant_access_token = loginFeishu(app_id, app_secret)
-    current_update_time_dict = initFiles(database_path, audio_path, cover_path, thumb_path, lyric_path)
+    include_sync = False
+    if os.path.exists(database_path + '.sync'):
+        prompt = input("检测到上次未完成的同步。是否继续上次同步？[y]/n:")
+        if prompt not in ['n', 'no']:
+            include_sync = True
+
+    current_update_time_dict = initFiles(database_path, audio_path, cover_path, thumb_path, lyric_path, include_sync)
     # 连接数据表
     page_token = ""
     has_more = True
