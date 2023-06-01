@@ -115,8 +115,11 @@ def syncRecord(record: dict, current_update_time_dict: dict,
         if update_time <= current_update_time:
             update_required = False
     prefix = fields['前缀'][0]['text']
-    prefix = prefix.replace('合唱', 'EOE')
-    prefix = prefix.replace('团舞', 'EOE')
+    prefix_arr = prefix.split(" ")
+    prefix_arr[1] = prefix_arr[1].replace('合唱', 'EOE')
+    prefix_arr[1] = prefix_arr[1].replace('团舞', 'EOE')
+    prefix = " ".join(prefix_arr)
+
     postfix = 'm4a'
     if '歌曲文件' in fields and fields['歌曲文件']:
         raw_file_name: str = fields['歌曲文件'][0]['name']
